@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluador ROSA V2 - Con Tablas Oficiales Integradas</title>
+<style>
+  :root {
+    --primary: #0b5cab;
+    --primary-dark: #08447f;
+    --bg-color: #f4f7f9;
+    --card-bg: #ffffff;
+    --text-color: #2c3e50;
+    --border-color: #dcdfe6;
+    --font-scale: 1;
+
+    --risk-inapreciable: #2e7d32;
+    --risk-bajo: #558b2f;
+    --risk-medio: #f9a825;
+    --risk-alto: #ef6c00;
+    --risk-muyalto: #c62828;
+  }
+
+  body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: calc(15px * var(--font-scale));
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.5;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .accessibility-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+
+  .accessibility-controls button {
+    background: white;
+    color: var(--primary);
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 25px auto;
+    padding: 0 20px;
+  }
+
+  .progress-container {
+    background: #e0e0e0;
+    border-radius: 10px;
+    height: 12px;
+    width: 100%;
+    margin-bottom: 25px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    background: var(--primary);
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+  }
+
+  .card-title {
+    margin-top: 0;
+    color: var(--primary);
+    border-bottom: 2px solid var(--bg-color);
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.3rem;
+  }
+
+  .helper-text {
+    font-size: 0.9rem;
+    color: #555;
+    background: #e8f4fd;
+    padding: 10px 14px;
+    border-left: 4px solid var(--primary);
+    border-radius: 4px;
+    margin-bottom: 15px;
+  }
+
+  .grid-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    background: #fafbfc;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e1e4e8;
+  }
+
+  label {
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  input, select {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    outline: none;
+    background: white;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(11, 92, 171, 0.1);
+  }
+
+  .btn {
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    background-color: var(--primary);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn:hover { background-color: var(--primary-dark); }
+  .btn-success { background-color: var(--risk-inapreciable); }
+  .btn-success:hover { background-color: #1b5e20; }
+  .btn-secondary { background-color: #6c757d; }
+  .btn-secondary:hover { background-color: #5a6268; }
+
+  .actions {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  .result-box {
+    text-align: left;
+    padding: 25px;
+    border-radius: 10px;
+    background: #f8f9fa;
+    border: 2px dashed var(--border-color);
+    margin-top: 20px;
+  }
+
+  .score-badge {
+    display: inline-block;
+    padding: 10px 25px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    border-radius: 50px;
+    color: white;
+    margin: 15px 0;
+  }
+
+  .bg-inapreciable { background-color: var(--risk-inapreciable); }
+  .bg-bajo { background-color: var(--risk-bajo); }
+  .bg-medio { background-color: var(--risk-medio); color: #000; }
+  .bg-alto { background-color: var(--risk-alto); }
+  .bg-muyalto { background-color: var(--risk-muyalto); }
+
+  .alert-error {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    border: 1px solid #ef9a9a;
+    display: none;
+    font-weight: 600;
+  }
+
+  /* Estilos para las Tablas Visuales de Consulta */
+  .tables-reference-section {
+    margin-top: 30px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+
+  .tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+  }
+
+  .table-card {
+    background: #fdfdfd;
+    border: 1px solid #e1e4e8;
+    padding: 15px;
+    border-radius: 8px;
+  }
+
+  .table-card h4 {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 1rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 6px;
+  }
+
+  .mini-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 0.78rem;
+    text-align: center;
+  }
+
+  .mini-table th, .mini-table td {
+    border: 1px solid #dcdfe6;
+    padding: 4px;
+  }
+
+  .mini-table th {
+    background-color: #0b5cab;
+    color: white;
+  }
+
+  .action-cell {
+    background-color: #ffcdd2;
+    color: #b71c1c;
+    font-weight: bold;
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="header-content">
+    <h1>🪑 Evaluador Ergonómico ROSA V2</h1>
+    <div class="accessibility-controls">
+      <span>Tamaño Texto:</span>
+      <button onclick="changeFontSize(-0.1)">A-</button>
+      <button onclick="resetFontSize()">A</button>
+      <button onclick="changeFontSize(0.1)">A+</button>
+      <label style="margin-left:10px; cursor:pointer;"><input type="checkbox" id="soundEnabled" checked> 🔊 Audio</label>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div id="alertBox" class="alert-error"></div>
+
+  <!-- DATOS GENERALES -->
+  <div class="card">
+    <h2 class="card-title">📋 1. Datos de Identificación del Puesto</h2>
+    <div class="grid-form">
+      <div class="form-group">
+        <label for="nombre">Nombre del Colaborador *</label>
+        <input type="text" id="nombre" placeholder="Ej. Carlos Mendoza" oninput="updateProgress()">
+      </div>
+      <div class="form-group">
+        <label for="cargo">Cargo *</label>
+        <input type="text" id="cargo" placeholder="Ej. Asistente Administrativo" oninput="updateProgress()">
+      </div>
+      <div class="form-group">
+        <label for="puesto">Puesto de Trabajo / Área *</label>
+        <input type="text" id="puesto" placeholder="Ej. Oficina Central - Módulo 3" oninput="updateProgress()">
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN A: SILLA -->
+  <div class="card">
+    <h2 class="card-title">💺 2. Sección A: Evaluación de la Silla de Oficina</h2>
+    <div class="helper-text">
+      💡 <b>Guía visual rápida:</b> Observa al trabajador sentado. Las rodillas deben formar un ángulo de 90°[cite: 3, 5], debe haber espacio detrás de las rodillas[cite: 3, 5], los codos deben descansar relajados a 90°[cite: 3, 5] y la espalda debe tener soporte lumbar[cite: 5].
+    </div>
+    <div class="grid-form">
+      <div class="form-group">
+        <label for="a1">A1. Altura del Asiento</label>
+        <select id="a1" onchange="updateProgress()">
+          <option value="1">1 - Neutra (Pies firmes, rodillas a 90°)</option>
+          <option value="2">2 - Desviación (Asiento muy alto o muy bajo)</option>
+          <option value="3">3 - Pies sin tocar el suelo (Colgando)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="a2">A2. Profundidad del Asiento</label>
+        <select id="a2" onchange="updateProgress()">
+          <option value="1">1 - Adecuada (aprox. 8 cm libres en la corva)</option>
+          <option value="2">2 - Desviación (Muy corto o muy largo)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="a3">A3. Reposabrazos</label>
+        <select id="a3" onchange="updateProgress()">
+          <option value="1">1 - Correcto (Codos a 90°, hombros relajados)</option>
+          <option value="2">2 - Desviación (Muy altos o muy bajos)</option>
+          <option value="3">3 - Separados o sin apoyo cómodo</option>
+          <option value="4">4 - Bordes afilados o duros (+2)</option>
+          <option value="5">5 - Sin reposabrazos (+3)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="a4">A4. Respaldo de la Silla</label>
+        <select id="a4" onchange="updateProgress()">
+          <option value="1">1 - Correcto (Apoyo lumbar, inclinación 95°-110°)</option>
+          <option value="2">2 - Sin soporte lumbar o inadecuado</option>
+          <option value="3">3 - Inclinación excesiva o menor a 95°</option>
+          <option value="4">4 - No se utiliza el respaldo o no es regulable</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="tiempo">Tiempo de Uso Continuo (Silla)</label>
+        <select id="tiempo" onchange="updateProgress()">
+          <option value="1">+1 (Más de 4 horas continuas)</option>
+          <option value="0">0 (Entre 1 y 4 horas)</option>
+          <option value="-1">-1 (Menos de 1 hora al día)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN B: TELÉFONO Y PANTALLA -->
+  <div class="card">
+    <h2 class="card-title">🖥️ 📱 3. Sección B: Teléfono y Pantalla</h2>
+    <div class="helper-text">
+      💡 <b>Guía visual rápida:</b> El teléfono no debe sostenerse con el hombro[cite: 8]. La pantalla debe estar a la altura de los ojos a una distancia de un brazo extendido (40-75 cm)[cite: 5, 8].
+    </div>
+    <div class="grid-form">
+      <div class="form-group">
+        <label for="telefono">Uso del Teléfono</label>
+        <select id="telefono" onchange="updateProgress()">
+          <option value="0">0 - No usa / Usa manos libres</option>
+          <option value="1">1 - Distancia correcta con una mano</option>
+          <option value="2">2 - Teléfono alejado a más de 30 cm</option>
+          <option value="3">3 - Sujeción crítica con el hombro/cuello</option>
+          <option value="4">4 - Nivel de riesgo adicional 4</option>
+          <option value="5">5 - Nivel de riesgo adicional 5</option>
+          <option value="6">6 - Uso crítico sostenido</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="pantalla">Uso de Pantalla (Monitor)</label>
+        <select id="pantalla" onchange="updateProgress()">
+          <option value="1">1 - Altura de los ojos, a 40-75 cm</option>
+          <option value="2">2 - Pantalla baja (por debajo de 30°)</option>
+          <option value="3">3 - Pantalla alta / extensión de cuello</option>
+          <option value="4">4 - Distancia mayor a 75 cm</option>
+          <option value="5">5 - Giro de cuello constante / Sin portadocumentos</option>
+          <option value="6">6 - Reflejos molestos en pantalla</option>
+          <option value="7">7 - Múltiples pantallas desalineadas</option>
+          <option value="8">8 - Ubicación crítica</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN C: RATÓN Y TECLADO -->
+  <div class="card">
+    <h2 class="card-title">⌨️ 🖱️ 4. Sección C: Ratón y Teclado</h2>
+    <div class="helper-text">
+      💡 <b>Guía visual rápida:</b> El ratón debe estar alineado con el hombro[cite: 9]. El teclado debe permitir muñecas rectas y hombros relajados[cite: 6, 9] sin superficies duras que presionen las muñecas[cite: 6, 9].
+    </div>
+    <div class="grid-form">
+      <div class="form-group">
+        <label for="raton">Dispositivo Puntero (Ratón)</label>
+        <select id="raton" onchange="updateProgress()">
+          <option value="0">0 - No utiliza</option>
+          <option value="1">1 - Alineado con el hombro, muñeca recta</option>
+          <option value="2">2 - Desalineado o fuera del alcance</option>
+          <option value="3">3 - Agarre en pinza o superficies incómodas</option>
+          <option value="4">4 - Ratón y teclado a diferentes alturas</option>
+          <option value="5">5 - Reposamanos duro o puntos de presión</option>
+          <option value="6">6 - Espacio insuficiente</option>
+          <option value="7">7 - Ubicación crítica</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="teclado">Teclado</label>
+        <select id="teclado" onchange="updateProgress()">
+          <option value="1">1 - Muñecas rectas, hombros relajados</option>
+          <option value="2">2 - Extensión de muñeca mayor a 15°</option>
+          <option value="3">3 - Desviación al escribir</option>
+          <option value="4">4 - Teclado elevado / hombros encogidos</option>
+          <option value="5">5 - Alcance por encima de la cabeza</option>
+          <option value="6">6 - Soporte de teclado no ajustable</option>
+          <option value="7">7 - Ubicación sin espacio ergonómico</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTONES Y RESULTADOS -->
+  <div class="card">
+    <div class="actions">
+      <button class="btn" onclick="calcularROSA()">🧮 Calcular Puntuación ROSA</button>
+      <button class="btn btn-success" onclick="guardarEvaluacion()">💾 Guardar en Google Sheets</button>
+      <button class="btn btn-secondary" onclick="exportarExcelLocal()">📊 Exportar CSV Local</button>
+    </div>
+
+    <div id="resultado" class="result-box" style="display:none;"></div>
+    <div id="estadoGuardado" style="margin-top:15px; font-weight:bold;"></div>
+  </div>
+
+  <!-- SECCIÓN VISUAL DE LAS TABLAS OFICIALES DEL MÉTODO ROSA (NTP 1173) -->
+  <div class="tables-reference-section">
+    <h3 style="color: var(--primary); margin-top:0;">📖 Tablas de Referencia Oficial (Método ROSA / NTP 1173)</h3>
+    <p style="font-size:0.9rem; color:#666;">Estas son las matrices estándar utilizadas por el motor de cálculo automático para combinar las puntuaciones de cada factor:</p>
+    
+    <div class="tables-grid">
+      
+      <!-- TABLA A -->
+      <div class="table-card">
+        <h4>Tabla A: Puntuación de la Silla[cite: 7]</h4>
+        <table class="mini-table">
+          <tr><th>A3+A4 \ A1+A2</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+          <tr><td><b>2</b></td><td>2</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+          <tr><td><b>3</b></td><td>2</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+          <tr><td><b>4</b></td><td>3</td><td>3</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+          <tr><td><b>5</b></td><td>4</td><td>4</td><td>4</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+          <tr><td><b>6</b></td><td>5</td><td>5</td><td>5</td><td>5</td><td>6</td><td>7</td><td>8</td></tr>
+          <tr><td><b>7</b></td><td>6</td><td>6</td><td>6</td><td>6</td><td>7</td><td>7</td><td>8</td></tr>
+          <tr><td><b>8</b></td><td>7</td><td>7</td><td>7</td><td>8</td><td>8</td><td>8</td><td>9</td></tr>
+          <tr><td><b>9</b></td><td>8</td><td>8</td><td>8</td><td>8</td><td>9</td><td>9</td><td>9</td></tr>
+        </table>
+      </div>
+
+      <!-- TABLA B -->
+      <div class="table-card">
+        <h4>Tabla B: Teléfono y Pantalla[cite: 9]</h4>
+        <table class="mini-table">
+          <tr><th>Tel \ Pan</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+          <tr><td><b>0</b></td><td>1</td><td>1</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>6</td></tr>
+          <tr><td><b>1</b></td><td>1</td><td>1</td><td>1</td><td>2</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
+          <tr><td><b>2</b></td><td>1</td><td>2</td><td>2</td><td>3</td><td>3</td><td>4</td><td>6</td><td>7</td><td>7</td></tr>
+          <tr><td><b>3</b></td><td>2</td><td>2</td><td>3</td><td>3</td><td>4</td><td>5</td><td>6</td><td>8</td><td>8</td></tr>
+          <tr><td><b>4</b></td><td>3</td><td>3</td><td>4</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>8</td></tr>
+          <tr><td><b>5</b></td><td>4</td><td>4</td><td>5</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>9</td></tr>
+          <tr><td><b>6</b></td><td>5</td><td>5</td><td>6</td><td>7</td><td>8</td><td>8</td><td>9</td><td>9</td><td>9</td></tr>
+        </table>
+      </div>
+
+      <!-- TABLA C -->
+      <div class="table-card">
+        <h4>Tabla C: Ratón y Teclado[cite: 9]</h4>
+        <table class="mini-table">
+          <tr><th>Rat \ Tec</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr>
+          <tr><td><b>0</b></td><td>1</td><td>1</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
+          <tr><td><b>1</b></td><td>1</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+          <tr><td><b>2</b></td><td>1</td><td>2</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+          <tr><td><b>3</b></td><td>2</td><td>3</td><td>3</td><td>3</td><td>5</td><td>6</td><td>7</td><td>8</td></tr>
+          <tr><td><b>4</b></td><td>3</td><td>4</td><td>4</td><td>5</td><td>5</td><td>6</td><td>7</td><td>8</td></tr>
+          <tr><td><b>5</b></td><td>4</td><td>5</td><td>5</td><td>6</td><td>6</td><td>7</td><td>8</td><td>9</td></tr>
+          <tr><td><b>6</b></td><td>5</td><td>6</td><td>6</td><td>7</td><td>7</td><td>8</td><td>8</td><td>9</td></tr>
+          <tr><td><b>7</b></td><td>6</td><td>7</td><td>7</td><td>8</td><td>8</td><td>9</td><td>9</td><td>9</td></tr>
+        </table>
+      </div>
+
+      <!-- TABLA D -->
+      <div class="table-card">
+        <h4>Tabla D: Pantalla y Periféricos[cite: 2]</h4>
+        <table class="mini-table">
+          <tr><th>B \ C</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th></tr>
+          <tr><td><b>1</b></td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td></tr>
+          <tr><td><b>2</b></td><td>2</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td></tr>
+          <tr><td><b>3</b></td><td>3</td><td>3</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td></tr>
+          <tr><td><b>4</b></td><td>4</td><td>4</td><td>4</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td></tr>
+          <tr><td><b>5</b></td><td>5</td><td>5</td><td>5</td><td>5</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td></tr>
+          <tr><td><b>6</b></td><td>6</td><td>6</td><td>6</td><td>6</td><td>6</td><td>6</td><td>7</td><td>8</td><td>9</td></tr>
+          <tr><td><b>7</b></td><td>7</td><td>7</td><td>7</td><td>7</td><td>7</td><td>7</td><td>7</td><td>8</td><td>9</td></tr>
+          <tr><td><b>8</b></td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td><td>9</td></tr>
+          <tr><td><b>9</b></td><td>9</td><td>9</td><td>9</td><td>9</td><td>9</td><td>9</td><td>9</td><td>9</td><td>9</td></tr>
+        </table>
+      </div>
+
+      <!-- TABLA E -->
+      <div class="table-card" style="grid-column: 1 / -1;">
+        <h4>Tabla E: Puntuación Final ROSA (Nivel de Acción ≥ 5 sombreado)[cite: 2, 10]</h4>
+        <table class="mini-table">
+          <tr><th>Silla + T \ Tabla D</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th></tr>
+          <tr><td><b>1</b></td><td>1</td><td>2</td><td>3</td><td>4</td><td class="action-cell">5</td><td class="action-cell">7</td><td class="action-cell">8</td><td class="action-cell">9</td><td class="action-cell">9</td><td class="action-cell">10</td></tr>
+          <tr><td><b>2</b></td><td>2</td><td>2</td><td>3</td><td>4</td><td class="action-cell">5</td><td class="action-cell">7</td><td class="action-cell">8</td><td class="action-cell">9</td><td class="action-cell">9</td><td class="action-cell">10</td></tr>
+          <tr><td><b>3</b></td><td>3</td><td>3</td><td>3</td><td>4</td><td class="action-cell">5</td><td class="action-cell">6</td><td class="action-cell">7</td><td class="action-cell">8</td><td class="action-cell">9</td><td class="action-cell">10</td></tr>
+          <tr><td><b>4</b></td><td>4</td><td>4</td><td>4</td><td>4</td><td class="action-cell">5</td><td class="action-cell">6</td><td class="action-cell">7</td><td class="action-cell">8</td><td class="action-cell">9</td><td class="action-cell">10</td></tr>
+          <tr><td><b>5</b></td><td class="action-cell">5</td><td class="action-cell">5</td><td class="action-cell">5</td><td class="action-cell">5</td><td class="action-cell">5</td><td class="action-cell">6</td><td class="action-cell">7</td><td class="action-cell">8</td><td class="action-cell">9</td><td class="action-cell">10</td></tr>
+          <tr><td><b>6</b></td><td class="action-cell">6</td><td class="action-cell">6</td><td class="action-cell">6</td><td class="action-cell">6</td><td class="action-cell">6</td><td class="action-cell">6</td><td class="action-cell">7</td><td class="action-cell">8</td><td class="action-cell">9</td><td class="action-cell">10</td></tr>
+          <tr><td><b>7</b></td><td class="action-cell">7</td><td class="action-cell">7</td><td class="action-cell">7</td><td class="action-cell">7</td><td class="action-cell">7</td><td class="action-cell">7</td><td class="action-cell">7</td><td class="action-cell">8</td><td class="action-cell">9</td><td class="action-cell">10</td></tr>
+          <tr><td><b>8</b></td><td class="action-cell">8</td><td class="action-cell">8</td><td class="action-cell">8</td><td class="action-cell">8</td><td class="action-cell">8</td><td class="action-cell">8</td><td class="action-cell">8</td><td class="action-cell">8</td><td class="action-cell">9</td><td class="action-cell">10</td></tr>
+          <tr><td><b>9</b></td><td class="action-cell">9</td><td class="action-cell">9</td><td class="action-cell">9</td><td class="action-cell">9</td><td class="action-cell">9</td><td class="action-cell">9</td><td class="action-cell">9</td><td class="action-cell">9</td><td class="action-cell">9</td><td class="action-cell">10</td></tr>
+          <tr><td><b>10</b></td><td class="action-cell">10</td><td class="action-cell">10</td><td class="action-cell">10</td><td class="action-cell">10</td><td class="action-cell">10</td><td class="action-cell">10</td><td class="action-cell">10</td><td class="action-cell">10</td><td class="action-cell">10</td><td class="action-cell">10</td></tr>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbztHulJ8eMh2UMr6UUWHZh_0v35JxZJtJto8PC_vHY7C5FXpsiZlQyyfFqTcDyGOrQGyw/exec";
+
+// MATRICES OFICIALES DEL MÉTODO ROSA
+const TABLA_A = {
+  2:{2:2,3:2,4:3,5:4,6:5,7:6,8:7,9:8},
+  3:{2:2,3:2,4:3,5:4,6:5,7:6,8:7,9:8},
+  4:{2:3,3:3,4:3,5:4,6:5,7:6,8:7,9:8},
+  5:{2:4,3:4,4:4,5:4,6:5,7:6,8:7,9:8},
+  6:{2:5,3:5,4:5,5:5,6:6,7:7,8:8,9:9},
+  7:{2:6,3:6,4:6,5:6,6:7,7:8,8:8,9:9},
+  8:{2:7,3:7,4:7,5:8,6:8,7:9,8:9,9:9}
+};
+
+const TABLA_B = {
+  0:{1:1,2:1,3:2,4:3,5:4,6:5,7:6,8:7},
+  1:{1:1,2:2,3:2,4:3,5:4,6:5,7:6,8:7},
+  2:{1:2,2:2,3:3,4:3,5:4,6:5,7:7,8:7},
+  3:{1:2,2:3,3:3,4:4,5:5,6:6,7:8,8:8},
+  4:{1:3,2:3,3:4,4:4,5:5,6:6,7:8,8:8},
+  5:{1:4,2:4,3:5,4:5,5:6,6:7,7:8,8:9},
+  6:{1:5,2:5,3:6,4:6,5:7,6:8,7:9,8:9}
+};
+
+const TABLA_C = {
+  0:{1:1,2:1,3:2,4:3,5:4,6:5,7:6},
+  1:{1:1,2:1,3:2,4:3,5:4,6:5,7:6},
+  2:{1:2,2:2,3:3,4:4,5:5,6:6,7:7},
+  3:{1:3,2:3,3:4,4:5,5:6,6:7,7:8},
+  4:{1:4,2:4,3:5,4:5,5:6,6:7,7:8},
+  5:{1:5,2:5,3:6,4:6,5:7,6:8,7:8},
+  6:{1:5,2:6,3:6,4:7,5:7,6:8,7:9},
+  7:{1:6,2:7,3:7,4:8,5:8,6:9,7:9}
+};
+
+const TABLA_D = {
+  1:{1:1,2:2,3:3,4:4,5:5,6:7,7:8,8:9,9:9},
+  2:{1:2,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9},
+  3:{1:3,2:3,3:3,4:4,5:5,6:6,7:7,8:8,9:9},
+  4:{1:4,2:4,3:4,4:4,5:5,6:6,7:7,8:8,9:9},
+  5:{1:5,2:5,3:5,4:5,5:5,6:6,7:7,8:8,9:9},
+  6:{1:6,2:6,3:6,4:6,5:6,6:7,7:8,8:8,9:9},
+  7:{1:7,2:7,3:7,4:7,5:7,6:8,7:8,8:9,9:9},
+  8:{1:8,2:8,3:8,4:8,5:8,6:8,7:9,8:9,9:9},
+  9:{1:9,2:9,3:9,4:9,5:9,6:9,7:9,8:9,9:9}
+};
+
+const TABLA_E = {
+  1:{1:1,2:2,3:3,4:4,5:5,6:7,7:8,8:9,9:10},
+  2:{1:2,2:2,3:3,4:4,5:5,6:7,7:8,8:9,9:10},
+  3:{1:3,2:3,3:3,4:4,5:5,6:6,7:7,8:8,9:9},
+  4:{1:4,2:4,3:4,4:4,5:5,6:6,7:7,8:8,9:9},
+  5:{1:5,2:5,3:5,4:5,5:5,6:6,7:7,8:8,9:9},
+  6:{1:6,2:6,3:6,4:6,5:6,6:7,7:7,8:8,9:9},
+  7:{1:7,2:7,3:7,4:7,5:7,6:8,7:8,8:9,9:9},
+  8:{1:8,2:8,3:8,4:8,5:8,6:8,7:9,8:9,9:10},
+  9:{1:9,2:9,3:9,4:9,5:9,6:9,7:9,8:9,9:10},
+  10:{1:10,2:10,3:10,4:10,5:10,6:10,7:10,8:10,9:10}
+};
+
+let currentFontScale = 1;
+function changeFontSize(delta) {
+  currentFontScale = Math.min(Math.max(0.8, currentFontScale + delta), 1.4);
+  document.documentElement.style.setProperty('--font-scale', currentFontScale);
+}
+function resetFontSize() {
+  currentFontScale = 1;
+  document.documentElement.style.setProperty('--font-scale', 1);
+}
+
+function playSound(type) {
+  if (!document.getElementById("soundEnabled").checked) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    if (type === 'success') {
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    } else {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, ctx.currentTime);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    }
+  } catch(e) {}
+}
+
+function updateProgress() {
+  const fields = ['nombre', 'cargo', 'puesto', 'a1', 'a2', 'a3', 'a4', 'tiempo', 'telefono', 'pantalla', 'raton', 'teclado'];
+  let filled = 0;
+  fields.forEach(id => {
+    if (document.getElementById(id).value.trim() !== "") filled++;
+  });
+  document.getElementById("progressBar").style.width = (filled / fields.length) * 100 + "%";
+}
+
+function validarFormulario() {
+  const nombre = document.getElementById("nombre").value.trim();
+  const cargo = document.getElementById("cargo").value.trim();
+  const puesto = document.getElementById("puesto").value.trim();
+  const alertBox = document.getElementById("alertBox");
+
+  if (!nombre || !cargo || !puesto) {
+    alertBox.style.display = "block";
+    alertBox.innerHTML = "⚠️ Por favor, ingresa los datos generales obligatorios (Nombre, Cargo y Puesto).";
+    playSound('error');
+    return false;
+  }
+  alertBox.style.display = "none";
+  return true;
+}
+
+function obtenerCalculosROSA() {
+  let a12 = parseInt(document.getElementById("a1").value) + parseInt(document.getElementById("a2").value);
+  let a34 = parseInt(document.getElementById("a3").value) + parseInt(document.getElementById("a4").value);
+
+  a12 = Math.min(Math.max(a12, 2), 8);
+  a34 = Math.min(Math.max(a34, 2), 9);
+
+  let tablaA = TABLA_A[a12][a34];
+  let sillaTiempo = Math.min(Math.max(tablaA + parseInt(document.getElementById("tiempo").value), 1), 10);
+
+  let telVal = parseInt(document.getElementById("telefono").value);
+  let panVal = parseInt(document.getElementById("pantalla").value);
+  let ratVal = parseInt(document.getElementById("raton").value);
+  let tecVal = parseInt(document.getElementById("teclado").value);
+
+  let tablaB = TABLA_B[Math.min(telVal, 6)][Math.min(panVal, 8)];
+  let tablaC = TABLA_C[Math.min(ratVal, 7)][Math.min(tecVal, 7)];
+  let tablaD = TABLA_D[Math.min(tablaB, 9)][Math.min(tablaC, 9)];
+  let rosa = TABLA_E[Math.min(sillaTiempo, 10)][Math.min(tablaD, 9)];
+
+  let riesgo = "";
+  let claseCss = "";
+
+  if (rosa <= 2) { riesgo = "Inapreciable (Sin riesgo)"; claseCss = "bg-inapreciable"; }
+  else if (rosa <= 4) { riesgo = "Bajo"; claseCss = "bg-bajo"; }
+  else if (rosa <= 6) { riesgo = "Medio (Requiere Acción)"; claseCss = "bg-medio"; }
+  else if (rosa <= 8) { riesgo = "Alto (Acción Inmediata)"; claseCss = "bg-alto"; }
+  else { riesgo = "Muy Alto (Riesgo Crítico)"; claseCss = "bg-muyalto"; }
+
+  return { tablaA, sillaTiempo, tablaB, tablaC, tablaD, rosa, riesgo, claseCss };
+}
+
+function calcularROSA() {
+  if (!validarFormulario()) return;
+  const data = obtenerCalculosROSA();
+  const resDiv = document.getElementById("resultado");
+
+  resDiv.style.display = "block";
+  resDiv.innerHTML = `
+    <h3>📊 Resultados del Análisis ROSA</h3>
+    <p><b>Puntuación Silla (Tabla A con tiempo):</b> ${data.sillaTiempo} (Parcial Tabla A: ${data.tablaA})</p>
+    <p><b>Puntuación Periféricos (Tabla D):</b> ${data.tablaD} (Teléfono/Pantalla B: ${data.tablaB} | Ratón/Teclado C: ${data.tablaC})</p>
+    <div class="score-badge ${data.claseCss}">
+      Puntuación ROSA Final: ${data.rosa}
+    </div>
+    <p><b>Nivel de Riesgo / Actuación:</b> ${data.riesgo}</p>
+    ${data.rosa >= 5 ? '<p style="color:#c62828; font-weight:bold;">⚠️ ¡Atención! La puntuación es 5 o superior. Según la NTP 1173, se requiere una intervención ergonómica inmediata en el puesto[cite: 10].</p>' : '<p style="color:#2e7d32; font-weight:bold;">✅ El puesto se encuentra por debajo del nivel de acción oficial.</p>'}
+  `;
+  playSound('success');
+}
+
+async function guardarEvaluacion() {
+  if (!validarFormulario()) return;
+  const data = obtenerCalculosROSA();
+  const estado = document.getElementById("estadoGuardado");
+
+  const payload = {
+    id: "ROSA-" + Date.now(),
+    fecha: new Date().toLocaleDateString(),
+    nombre: document.getElementById("nombre").value.trim(),
+    cargo: document.getElementById("cargo").value.trim(),
+    puesto: document.getElementById("puesto").value.trim(),
+    resultado: data.rosa,
+    riesgo: data.riesgo
+  };
+
+  estado.style.color = "#0b5cab";
+  estado.innerHTML = "⏳ Enviando datos a Google Sheets...";
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    await response.text();
+    estado.style.color = "#2e7d32";
+    estado.innerHTML = "✅ ¡Evaluación guardada con éxito en Google Sheets!";
+    playSound('success');
+  } catch (error) {
+    estado.style.color = "#c62828";
+    estado.innerHTML = "❌ Error al conectar con Google Sheets. Comprueba tu conexión.";
+    playSound('error');
+  }
+}
+
+function exportarExcelLocal() {
+  if (!validarFormulario()) return;
+  const data = obtenerCalculosROSA();
+  const fecha = new Date().toLocaleDateString();
+  const nombre = document.getElementById("nombre").value.trim();
+  const cargo = document.getElementById("cargo").value.trim();
+  const puesto = document.getElementById("puesto").value.trim();
+
+  const csvContent = "data:text/csv;charset=utf-8," 
+    + "ID,Fecha,Nombre,Cargo,Puesto,SillaTiempo,TablaB,TablaC,TablaD,ROSA_Final,Nivel_Riesgo\n"
+    + `"ROSA-${Date.now()}","${fecha}","${nombre}","${cargo}","${puesto}",${data.sillaTiempo},${data.tablaB},${data.tablaC},${data.tablaD},${data.rosa},"${data.riesgo}"`;
+
+  const link = document.createElement("a");
+  link.setAttribute("href", encodeURI(csvContent));
+  link.setAttribute("download", `Evaluacion_ROSA_${nombre.replace(/\s+/g, '_')}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  playSound('success');
+}
+
+updateProgress();
+</script>
+
+</body>
+</html>
